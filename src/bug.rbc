@@ -1,7 +1,0 @@
-def x, 32767
-def y, 32767
-fct main:
-
-	jpe main, x, y
-	
-	end
