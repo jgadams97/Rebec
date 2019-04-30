@@ -1,26 +1,35 @@
 def num1, 0
 def num2, 0
 def operator, 0
-
-def n1, 5
-def n2, -12
+def say1, "Integer 1: ", 0
+def say2, "Integer 2: ", 0
+def say3, "Product: ", 0
+def say4, "Quotient: ", 0
+def say5, "Remainder: ", 0
 
 fct main:
-	
-	
+	;Get two numbers from STDIN and print product to STDOUT.
+
+
+	ldi print_in, say1
+	cal print
+
+	;Get first number.
 	cal getString	
 	ldi dec2word_in, getString_out
 	cal dec2word
 	lod num1, dec2word_out
 	
-	cal getString
-	lod operator, getString_out
-	
+	ldi print_in, say2
+	cal print
+
+	;Get second number.
 	cal getString	
 	ldi dec2word_in, getString_out
 	cal dec2word
 	lod num2, dec2word_out
-		
+	
+	;Multiply.
 	lod multiply_a, num1
 	lod multiply_b, num2
 	cal multiply
@@ -28,9 +37,43 @@ fct main:
 	lod word2dec_in, multiply_out
 	cal word2dec
 	
+	ldi print_in, say3
+	cal print
+
 	ldi print_in, word2dec_out
 	cal print
+	cal newline
+
+	;Divide.
+	lod divide_a, num1
+	lod divide_b, num2
+	cal divide
 	
+	lod word2dec_in, divide_out
+	cal word2dec
+	
+	ldi print_in, say4
+	cal print
+
+	ldi print_in, word2dec_out
+	cal print
+	cal newline
+
+	;Remainder.
+	lod divide_a, num1
+	lod divide_b, num2
+	cal divide
+
+	lod word2dec_in, divide_rem
+	cal word2dec
+	
+	ldi print_in, say5
+	cal print
+
+	ldi print_in, word2dec_out
+	cal print
+	cal newline
+
 	
 	end
 	
@@ -200,6 +243,7 @@ def divide_s, 0
 def divide_one, 1
 def divide_zero, 0
 def divide_out, 0
+def divide_rem, 0
 fct divide:
 	;Initial values.
 	ldi divide_s, 0
@@ -249,6 +293,7 @@ lbl divide_skip2:
 lbl divide_nnC:
 	;Store our result.
 	lod divide_out, divide_c
+	lod divide_rem, divide_d
 	ret
 	
 ;Bitwise left shift "count" times.

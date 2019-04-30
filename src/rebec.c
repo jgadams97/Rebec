@@ -141,7 +141,6 @@ void RebecCompile(rebec_line_t *lines, int line_count) {
 
 	//Handle the commands
 	for (int i = 0; i < line_count; i++) {
-		printf("%i / %i\n", i, line_count);
 		char *cmd = lines[i].command.name;
 		if (strcmp(cmd, "fct") == 0 || strcmp(cmd, "lbl") == 0) {
 			RebecFCT(lines[i], &code, verbose); 
@@ -152,11 +151,11 @@ void RebecCompile(rebec_line_t *lines, int line_count) {
 			//Throw an error if user isn't using FCT or DEF but is attempting to use those data types
 			for (int j = 0; j < lines[i].argc; j++) {
 				if (lines[i].args[j].type == DT_FCT) {
-					printf("Error on line %i: Function types can only be used with `FCT` or `LBL` statements.\n", lines[i].line_no);
+					fprintf(stderr, "Error on line %i: Function types can only be used with `FCT` or `LBL` statements.\n", lines[i].line_no);
 					exit(1);
 				}
 				if (lines[i].args[j].type == DT_STR) {
-					printf("Error on line %i: String types can only be used with `DEF` statements.\n", lines[i].line_no);
+					fprintf(stderr, "Error on line %i: String types can only be used with `DEF` statements.\n", lines[i].line_no);
 					exit(1);
 				}
 			}
@@ -219,7 +218,7 @@ void RebecCompile(rebec_line_t *lines, int line_count) {
 			//} else if (strcmp(cmd, "n1n") == 0) {
 			//	RebecN1N(lines[i], &code, verbose);
 			} else {
-				printf("Error on line %i: Unknown command `%s`.\n", lines[i].line_no, lines[i].command.name); 
+				fprintf(stderr, "Error on line %i: Unknown command `%s`.\n", lines[i].line_no, lines[i].command.name); 
 				exit(1);
 			}
 		}
@@ -252,11 +251,11 @@ char* RebecLineGetSymbol(rebec_line_t *rl) {
 			(rl->command.name[0] == 'l' && rl->command.name[1] == 'b' && rl->command.name[2] == 'l')) {
 			//These statements needs at least 1 argument
 			if (rl->argc == 0) {
-				printf("Error on line %i: Too few arguments.\n", rl->line_no);
+				fprintf(stderr, "Error on line %i: Too few arguments.\n", rl->line_no);
 				exit(1);
 			}
 			if (!IsAlphaNumeric(rl->args[0].data) || IsNumeric(rl->args[0].data[0])) {
-				printf("Error on line %i: Invalid symbol name.\n", rl->line_no);
+				fprintf(stderr, "Error on line %i: Invalid symbol name.\n", rl->line_no);
 				exit(1);
 			}
 			return rl->args[0].data;
@@ -296,11 +295,11 @@ void RebecLineValidate(rebec_line_t *rl, LabelList ll) {
 		FreeEvaluator(&ev);
 
 		if (ERROR_CODE != 0) {
-			printf("Error on line %i: Invalid expression.\n", rl->line_no); 
+			fprintf(stderr, "Error on line %i: Invalid expression.\n", rl->line_no); 
 			exit(1);
 		}
 		if (strlen(rl->args[i].data) <= 0) {
-			printf("Error on line %i: Argument left empty (trailing comma).\n", rl->line_no);
+			fprintf(stderr, "Error on line %i: Argument left empty (trailing comma).\n", rl->line_no);
 			exit(1); 
 		}
 	}
@@ -368,7 +367,7 @@ rebec_line_t RebecParseLine(const char *line, int line_no) {
 		}
 	}
 	if (!balanced) {
-		printf("Error on line %i: Unmatched quotation marks.\n", line_no);
+		fprintf(stderr, "Error on line %i: Unmatched quotation marks.\n", line_no);
 		exit(1); 
 	}
 
@@ -386,7 +385,7 @@ rebec_line_t RebecParseLine(const char *line, int line_no) {
 	}
 	//If it's not the right size, it's definitely not valid!
 	if (end != COMMAND_WIDTH) {
-		printf("Error on line %i: Invalid command `%s`.\n", line_no, cmd);
+		fprintf(stderr, "Error on line %i: Invalid command `%s`.\n", line_no, cmd);
 		exit(1);
 	}
 
@@ -471,7 +470,7 @@ rebec_line_t RebecParseLine(const char *line, int line_no) {
 				type = DT_LIT;
 			}
 		} else {
-			printf("Error on line %i: Empty argument.\n", line_no);
+			fprintf(stderr, "Error on line %i: Empty argument.\n", line_no);
 			exit(1); 
 		}
 		//Build our argument array
@@ -538,7 +537,7 @@ char RebecLoadLines(const char *fname) {
 		char* symbol = RebecLineGetSymbol(&rlines[i]);
 		if (symbol != NULL) {
 			if (LabelLookup(ll, symbol) != -1) {
-				printf("Error on line %i: Duplicate symbol.\n", rlines[i].line_no);
+				fprintf(stderr, "Error on line %i: Duplicate symbol.\n", rlines[i].line_no);
 				exit(1);
 			}
 			LabelListAddLabel(&ll, symbol, 0);
