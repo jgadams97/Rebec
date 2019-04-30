@@ -1,0 +1,771 @@
+def num1, 0
+def num2, 0
+def operator, 0
+
+def n1, 5
+def n2, -12
+
+fct main:
+	
+	
+	cal getString	
+	ldi dec2word_in, getString_out
+	cal dec2word
+	lod num1, dec2word_out
+	
+	cal getString
+	lod operator, getString_out
+	
+	cal getString	
+	ldi dec2word_in, getString_out
+	cal dec2word
+	lod num2, dec2word_out
+		
+	lod multiply_a, num1
+	lod multiply_b, num2
+	cal multiply
+	
+	lod word2dec_in, multiply_out
+	cal word2dec
+	
+	ldi print_in, word2dec_out
+	cal print
+	
+	
+	end
+	
+def getString_out, "0000000000000000000000000000000000000", 0	
+def getString_char, 0
+def getString_ptr, 0
+def getString_zero, 0
+def getString_newline, 10
+fct getString:
+	ldi getString_ptr, getString_out
+lbl getString_loop:
+	get getString_char
+	jpe getString_exit, getString_char, getString_newline
+	sbr getString_char, getString_ptr
+	inc getString_ptr
+	jmp getString_loop
+lbl getString_exit:
+	sbr getString_zero, getString_ptr
+	ret
+
+;Convert decimal string into word.
+;	Input:  dec2word_in (pointer)
+;	Output: dec2word_out (word)
+
+
+
+;Convert word into decimal string.
+;	Input:  word2dec_in (word)
+;	Output: word2dec_out (string)
+def word2dec_in, 0
+def word2dec_out, "+00000", 0
+def word2dec_zero, 0
+def word2dec_zero_char, "0"
+def word2dec_end, -1
+def word2dec_place, 10000
+def word2dec_one, 1
+def word2dec_ptr, 0
+fct word2dec:
+	;Check to see if the number is negative.
+	ldi word2dec_out, '+'
+	jge word2dec_not_neg, word2dec_in, word2dec_zero
+	ldi word2dec_out, '-'
+	neg word2dec_in
+lbl word2dec_not_neg:
+	ldi word2dec_place, 10000
+	ldi word2dec_ptr, word2dec_out+1
+lbl word2dec_loop:
+	;Divide our number by our place.
+	lod divide_a, word2dec_in
+	lod divide_b, word2dec_place
+	cal divide
+	;Remove digit from our word.
+	lod multiply_a, divide_out
+	lod multiply_b, word2dec_place
+	cal multiply
+	sub word2dec_in, multiply_out	
+	;Convert the result to ASCII and store it.
+	add divide_out, word2dec_zero_char
+	sbr divide_out, word2dec_ptr
+	;Increment our pointer.
+	inc word2dec_ptr
+	;Divide our place by 10.
+	lod divide_a, word2dec_place
+	ldi divide_b, 10
+	cal divide
+	lod word2dec_place, divide_out
+	;Loop if it is not 0.
+	jne word2dec_loop, word2dec_place, word2dec_zero	
+	ret
+
+
+
+;Convert decimal string into word.
+;	Input:  dec2word_in (pointer)
+;	Output: dec2word_out (word)
+def dec2word_in, 0
+def dec2word_out, 0
+def dec2word_digit, 0
+def dec2word_zero, "0"
+def dec2word_pos, "+"
+def dec2word_neg, "-"
+def dec2word_sign, 0
+def dec2word_end, -1
+def dec2word_offset, 0
+def dec2word_place, 1
+def dec2word_one, 1
+def dec2word_ptr, 0
+fct dec2word:
+	;Clear out.
+	clr dec2word_out
+	ldi dec2word_place, 1
+	;Skip positive sign.
+	lbr dec2word_digit, dec2word_in
+	jne dec2word_not_pos, dec2word_digit, dec2word_pos
+	inc dec2word_in
+lbl dec2word_not_pos:
+	;Check if the number is negative.
+	clr dec2word_sign
+	lbr dec2word_digit, dec2word_in
+	jne dec2word_not_neg, dec2word_digit, dec2word_neg
+	inc dec2word_in
+	ldi dec2word_sign, 1
+lbl dec2word_not_neg:
+	;Load the offset.
+	lod stringLength_in, dec2word_in
+	cal stringLength
+	lod dec2word_offset, stringLength_out
+	dec dec2word_offset
+	;Loop through all the characters.
+lbl dec2word_loop:
+	jpe dec2word_exit, dec2word_offset, dec2word_end
+	;Load the current digit.
+	lod dec2word_ptr, dec2word_in
+	add dec2word_ptr, dec2word_offset
+	lbr dec2word_digit, dec2word_ptr
+	;Convert it from ASCII to a word.
+	sub dec2word_digit, dec2word_zero
+	;Multiply it by our digit place.
+	lod multiply_a, dec2word_digit
+	lod multiply_b, dec2word_place
+	cal multiply
+	;Add it to our sum.
+	add dec2word_out, multiply_out
+	;Multiply our place by 10.
+	lod multiply_a, dec2word_place
+	ldi multiply_b, 10
+	cal multiply
+	lod dec2word_place, multiply_out
+	;Decrement our offset then loop.
+	dec dec2word_offset
+	jmp dec2word_loop
+lbl dec2word_exit:
+	;If the number is negative, negate the output.
+	jne dec2word_not_neg2, dec2word_sign, dec2word_one
+	neg dec2word_out
+lbl dec2word_not_neg2:
+	ret
+	
+def stringLength_in, 0
+def stringLength_out, 0
+def stringLength_ptr, 0
+def stringLength_word, 0
+def stringLength_zero, 0
+fct stringLength:
+	ldi stringLength_out, 0
+lbl stringLengthLoop:
+	lod stringLength_ptr, stringLength_in
+	add stringLength_ptr, stringLength_out
+	lbr stringLength_word, stringLength_ptr
+	jpe stringLengthEnd, stringLength_word, stringLength_zero
+	inc stringLength_out
+	jmp stringLengthLoop	
+lbl stringLengthEnd:
+	ret
+
+	
+;Divide A by B.
+;	Input:  divide_a (word)
+;	        divide_b (word)
+;	Output: divide_out (word)
+def divide_a, 0
+def divide_b, 0
+def divide_c, 0
+def divide_d, 0
+def divide_e, 0
+def divide_s, 0
+def divide_one, 1
+def divide_zero, 0
+def divide_out, 0
+fct divide:
+	;Initial values.
+	ldi divide_s, 0
+	ldi divide_c, 0
+	ldi divide_d, 0	
+	ldi divide_e, -32768
+	;If A is negative, negative it and increment S.
+	jge divide_nnA, divide_a, divide_zero
+	neg divide_a
+	inc divide_s
+lbl divide_nnA:
+	;If B is negative, negative it and increment S.
+	jge divide_nnB, divide_b, divide_zero
+	neg divide_b
+	inc divide_s
+lbl divide_nnB:
+lbl divide_loop:
+	;Shift d to the left once.
+	lod shiftLeft_in, divide_d
+	ldi shiftLeft_count, 1
+	cal shiftLeft
+	lod divide_d, shiftLeft_out
+	;Increment D if E & A != 0
+	lod and_a, divide_e
+	lod and_b, divide_a
+	cal and
+	jpe divide_skip1, and_out, divide_zero
+	inc divide_d
+lbl divide_skip1:
+	;d >= b
+	jpl divide_skip2, divide_d, divide_b
+	sub divide_d, divide_b
+	lod or_a, divide_c
+	lod or_b, divide_e
+	cal or
+	lod divide_c, or_out
+lbl divide_skip2:
+	lod shiftRight_in, divide_e
+	ldi shiftRight_count, 1
+	cal shiftRight
+	lod divide_e, shiftRight_out
+	;Loop if e != 0.
+	jne divide_loop, divide_e, divide_zero
+	;If S is 1, negate C.
+	jne divide_nnC, divide_s, divide_one
+	neg divide_c
+lbl divide_nnC:
+	;Store our result.
+	lod divide_out, divide_c
+	ret
+	
+;Bitwise left shift "count" times.
+;	Input:  shiftLeft_a (word)
+;	        shiftLeft_b (word)
+;	Output: shiftLeft_out (word)
+def shiftLeft_in, 0
+def shiftLeft_out, 0
+def shiftLeft_count, 0
+fct shiftLeft:
+	;Convert input to binary string.
+	lod word2bin_word, shiftLeft_in
+	cal word2bin
+	;Shift the result by count.
+	ldi binShiftLeft_bin, word2bin_bin
+	lod binShiftLeft_count, shiftLeft_count
+	cal binShiftLeft
+	;Convert back to word.
+	ldi bin2word_bin, word2bin_bin
+	cal bin2word
+	;Store word.
+	lod shiftLeft_out, bin2word_word
+	;Done.
+	ret
+	
+;Bitwise right shift "count" times.
+;	Input:  shiftRight_a (word)
+;	        shiftRight_b (word)
+;	Output: shiftRight_out (word)
+def shiftRight_in, 0
+def shiftRight_out, 0
+def shiftRight_count, 0
+fct shiftRight:
+	;Convert input to binary string.
+	lod word2bin_word, shiftRight_in
+	cal word2bin
+	;Shift the result by count.
+	ldi binShiftRight_bin, word2bin_bin
+	lod binShiftRight_count, shiftRight_count
+	cal binShiftRight
+	;Convert back to word.
+	ldi bin2word_bin, word2bin_bin
+	cal bin2word
+	;Store word.
+	lod shiftRight_out, bin2word_word
+	;Done.
+	ret
+
+;Bitwise AND one number by another.
+;	Input:  and_a (word)
+;	        and_b (word)
+;	Output: and_out (word)
+def and_a, 0
+def and_b, 0
+def and_out, 0
+def and_bin_buff, "0000000000000000", 0
+fct and:
+	;Convert A into a binary string.
+	lod word2bin_word, and_a
+	cal word2bin
+	;Store it.
+	ldi binCopy_bin_a, word2bin_bin
+	ldi binCopy_bin_b, and_bin_buff
+	cal binCopy
+	;Convert B into a binary string;
+	lod word2bin_word, and_b
+	cal word2bin
+	;AND them together.
+	ldi binAnd_bin_a, and_bin_buff
+	ldi binAnd_bin_b, word2bin_bin
+	cal binAnd
+	;Convert results back to word.
+	ldi bin2word_bin, binAnd_bin_out
+	cal bin2word
+	;Store the results.
+	lod and_out, bin2word_word
+	;Done.
+	ret
+	
+;Bitwise OR one number by another.
+;	Input:  or_a (word)
+;	        or_b (word)
+;	Output: or_out (word)
+def or_a, 0
+def or_b, 0
+def or_out, 0
+def or_bin_buff, "0000000000000000", 0
+fct or:
+	;Convert A into a binary string.
+	lod word2bin_word, or_a
+	cal word2bin
+	;Store it.
+	ldi binCopy_bin_a, word2bin_bin
+	ldi binCopy_bin_b, or_bin_buff
+	cal binCopy
+	;Convert B into a binary string;
+	lod word2bin_word, or_b
+	cal word2bin
+	;or them together.
+	ldi binOr_bin_a, or_bin_buff
+	ldi binOr_bin_b, word2bin_bin
+	cal binOr
+	;Convert results back to word.
+	ldi bin2word_bin, binOr_bin_out
+	cal bin2word
+	;Store the results.
+	lod or_out, bin2word_word
+	;Done.
+	ret
+
+;Multiplies one number by another.
+;	Input:  multiply_a (word)
+;	        multiply_b (word)
+;	Output: multiply_out (word)
+def multiply_a, 0
+def multiply_b, 0
+def multiply_out, 0
+def multiply_bin_a, "0000000000000000", 0
+def multiply_bin_b, "0000000000000000", 0
+fct multiply:
+
+	;Convert A into a binary string.
+	lod word2bin_word, multiply_a
+	cal word2bin
+	ldi binCopy_bin_a, word2bin_bin
+	ldi binCopy_bin_b, multiply_bin_a
+	cal binCopy	
+		
+	;Convert B into a binary string.
+	lod word2bin_word, multiply_b
+	cal word2bin
+	ldi binCopy_bin_a, word2bin_bin
+	ldi binCopy_bin_b, multiply_bin_b
+	cal binCopy
+	
+	;Multiply the two binary strings.
+	ldi binMultiply_bin_a, multiply_bin_a
+	ldi binMultiply_bin_b, multiply_bin_b
+	cal binMultiply
+	
+	;Convert the product binary string into a word.
+	ldi bin2word_bin, binMultiply_bin_out
+	cal bin2word
+	
+	;Store the result into the product.
+	lod multiply_out, bin2word_word
+	
+	ret
+	
+;Multiplies one binary number by another.
+;	Input:  binMultiply_bin_a (pointer)
+;	        binMultiply_bin_b (pointer)
+;	Output: binMultiply_bin_out (pointer)
+def binMultiply_bin_a, 0
+def binMultiply_bin_b, 0
+def binMultiply_bin_out, "0000000000000000", 0
+def binMultiply_sum, 0
+def binMultiply_ptr, 0
+def binMultiply_bit, 0
+def binMultiply_offset, 0
+def binMultiply_end, -1
+def binMultiply_zero, "0"
+
+fct binMultiply:
+	ldi binMultiply_sum, 0
+	ldi binMultiply_offset, 15
+	lod binCopy_bin_a, binMultiply_bin_a
+	ldi binCopy_bin_b, binMultiply_bin_out
+	cal binCopy
+			
+lbl binMultiplyLoop:
+	;Load the current bit.
+	lod binMultiply_ptr, binMultiply_bin_b
+	add binMultiply_ptr, binMultiply_offset
+	lbr binMultiply_bit, binMultiply_ptr
+	;Add to sum only if bit is not 0.
+	jpe binMultiplyDontAddSum, binMultiply_zero, binMultiply_bit
+	ldi bin2word_bin, binMultiply_bin_out
+	cal bin2word
+	add binMultiply_sum, bin2word_word	
+lbl binMultiplyDontAddSum:
+	;Shift the product to the left.
+	ldi binShiftLeftOnce_bin, binMultiply_bin_out
+	cal binShiftLeftOnce
+	
+	;Decrement the offset and loop while it is not -1.
+	dec binMultiply_offset
+	jne binMultiplyLoop, binMultiply_offset, binMultiply_end
+
+	;set binMultiply_sum
+	
+	;Convert sum to binary string.
+	lod word2bin_word, binMultiply_sum
+	cal word2bin
+	
+	;Copy results to product.
+	ldi binCopy_bin_a, word2bin_bin
+	ldi binCopy_bin_b, binMultiply_bin_out
+	cal binCopy
+	
+	ret
+
+
+;Finds the bitwise AND of a and b.
+;	Input:  binAnd_bin_a (pointer)
+;	        binAnd_bin_b (pointer)
+;	Output: binAnd_bin_out (pointer)
+def binAnd_bin_a, 0
+def binAnd_bin_b, 0
+def binAnd_bin_out, "0000000000000000", 0
+def binAnd_bin_ptr_a, 0
+def binAnd_bin_ptr_b, 0
+def binAnd_bin_ptr_out, 0
+def binAnd_offset, 0
+def binAnd_end, -1
+def binAnd_word_a, 0
+def binAnd_word_b, 0
+def binAnd_char_zero, "0"
+def binAnd_char_one, "1"
+fct binAnd:
+	ldi binAnd_offset, 15
+	
+lbl binAnd_loop:
+	lod binAnd_bin_ptr_a, binAnd_bin_a
+	add binAnd_bin_ptr_a, binAnd_offset
+	lod binAnd_bin_ptr_b, binAnd_bin_b
+	add binAnd_bin_ptr_b, binAnd_offset
+	ldi binAnd_bin_ptr_out, binAnd_bin_out
+	add binAnd_bin_ptr_out, binAnd_offset
+	
+	lbr binAnd_word_a, binAnd_bin_ptr_a
+	lbr binAnd_word_b, binAnd_bin_ptr_b
+	sbr binAnd_char_zero, binAnd_bin_ptr_out
+	
+	jpe binAndZero, binAnd_word_a, binAnd_char_zero
+	jpe binAndZero, binAnd_word_b, binAnd_char_zero
+	sbr binAnd_char_one, binAnd_bin_ptr_out
+lbl binAndZero:
+	
+	dec binAnd_offset
+	jne binAnd_loop, binAnd_offset, binAnd_end
+
+	ret
+	
+;Finds the bitwise OR of a and b.
+;	Input:  binOr_bin_a (pointer)
+;	        binOr_bin_b (pointer)
+;	Output: binOr_bin_out (pointer)
+def binOr_bin_a, 0
+def binOr_bin_b, 0
+def binOr_bin_out, "0000000000000000", 0
+def binOr_bin_ptr_a, 0
+def binOr_bin_ptr_b, 0
+def binOr_bin_ptr_out, 0
+def binOr_offset, 0
+def binOr_end, -1
+def binOr_word_a, 0
+def binOr_word_b, 0
+def binOr_char_zero, "0"
+def binOr_char_one, "1"
+fct binOr:
+	ldi binOr_offset, 15
+	
+lbl binOr_loop:
+	lod binOr_bin_ptr_a, binOr_bin_a
+	add binOr_bin_ptr_a, binOr_offset
+	lod binOr_bin_ptr_b, binOr_bin_b
+	add binOr_bin_ptr_b, binOr_offset
+	ldi binOr_bin_ptr_out, binOr_bin_out
+	add binOr_bin_ptr_out, binOr_offset
+	
+	lbr binOr_word_a, binOr_bin_ptr_a
+	lbr binOr_word_b, binOr_bin_ptr_b
+	sbr binOr_char_one, binOr_bin_ptr_out
+	
+	jpe binOrZero, binOr_word_a, binOr_char_one
+	jpe binOrZero, binOr_word_b, binOr_char_one
+	sbr binOr_char_zero, binOr_bin_ptr_out
+lbl binOrZero:
+	
+	dec binOr_offset
+	jne binOr_loop, binOr_offset, binOr_end
+
+	ret
+
+
+;Copies a binary string from a into b.
+;	Input:  binCopy_bin_a (pointer)
+;	        binCopy_bin_b (pointer)
+;	Output: binCopy_bin_b (pointer)
+def binCopy_bin_a, 0
+def binCopy_bin_b, 0
+def binCopy_bin_ptr_a, 0
+def binCopy_bin_ptr_b, 0
+def binCopy_offset, 0
+def binCopy_end, -1
+def binCopy_word, 0
+fct binCopy:
+	ldi binCopy_offset, 15
+	
+lbl binCopy_loop:
+	lod binCopy_bin_ptr_a, binCopy_bin_a
+	add binCopy_bin_ptr_a, binCopy_offset
+	lod binCopy_bin_ptr_b, binCopy_bin_b
+	add binCopy_bin_ptr_b, binCopy_offset
+	
+	lbr binCopy_word, binCopy_bin_ptr_a
+	sbr binCopy_word, binCopy_bin_ptr_b
+	
+	dec binCopy_offset
+	jne binCopy_loop, binCopy_offset, binCopy_end
+
+	ret
+	
+;Shifts a binary string to the right "count" times.
+;	Input:  binShiftRight_bin (pointer)
+;	        binShiftRight_count (word)
+;	Output: binShiftRight_bin (pointer)
+def binShiftRight_bin, 0
+def binShiftRight_count, 0
+def binShiftRight_zero, 0
+fct binShiftRight:
+	lod binShiftRightOnce_bin, binShiftRight_bin
+lbl binShiftRightLoop:
+	jpe binShiftRightEnd, binShiftRight_count, binShiftRight_zero
+	cal binShiftRightOnce
+	dec binShiftRight_count
+	jmp binShiftRightLoop	
+lbl binShiftRightEnd:
+	clr binShiftRight_count
+	ret
+
+;Shifts a binary string to the left "count" times.
+;	Input:  binShiftLeft_bin (pointer)
+;	        binShiftLeft_count (word)
+;	Output: binShiftLeft_bin (pointer)
+def binShiftLeft_bin, 0
+def binShiftLeft_count, 0
+def binShiftLeft_zero, 0
+fct binShiftLeft:
+	lod binShiftLeftOnce_bin, binShiftLeft_bin
+lbl binShiftLeftLoop:
+	jpe binShiftLeftEnd, binShiftLeft_count, binShiftLeft_zero
+	cal binShiftLeftOnce
+	dec binShiftLeft_count
+	jmp binShiftLeftLoop	
+lbl binShiftLeftEnd:
+	clr binShiftLeft_count
+	ret
+	
+;Shifts a binary string to the left once.
+;	Input:  binShiftLeftOnce_bin (pointer)
+;	Output: binShiftLeftOnce_bin (pointer)
+def binShiftLeftOnce_bin, 0
+def binShiftLeftOnce_ptr, 0
+def binShiftLeftOnce_offset, 0
+def binShiftLeftOnce_word, 0
+def binShiftLeftOnce_end, 16
+fct binShiftLeftOnce:
+	;Start on the second most significant bit.
+	ldi binShiftLeftOnce_offset, 1
+	;Loop through all bits.
+lbl binShiftLeftOnce_loop:
+	;Load the current bit.
+	lod binShiftLeftOnce_ptr, binShiftLeftOnce_bin
+	add binShiftLeftOnce_ptr, binShiftLeftOnce_offset
+	lbr binShiftLeftOnce_word, binShiftLeftOnce_ptr
+	;Store it into the previous bit.
+	dec binShiftLeftOnce_ptr
+	sbr binShiftLeftOnce_word, binShiftLeftOnce_ptr
+	inc binShiftLeftOnce_ptr
+	;Move to the next bit.
+	inc binShiftLeftOnce_offset
+	;Loop if we are not on the last bit.
+	jne binShiftLeftOnce_loop, binShiftLeftOnce_offset, binShiftLeftOnce_end
+	;Store 0 into the last bit.
+	ldi binShiftLeftOnce_word, '0'
+	sbr binShiftLeftOnce_word, binShiftLeftOnce_ptr
+	;Done.
+	ret
+	
+;Shifts a binary string to the right once.
+;	Input:  binShiftRightOnce_bin (pointer)
+;	Output: binShiftRightOnce_bin (pointer)
+def binShiftRightOnce_bin, 0
+def binShiftRightOnce_ptr, 0
+def binShiftRightOnce_offset, 0
+def binShiftRightOnce_word, 0
+def binShiftRightOnce_end, -1
+fct binShiftRightOnce:
+	;Start on the second least significant bit.
+	ldi binShiftRightOnce_offset, 14
+	;Loop through all bits.
+lbl binShiftRightOnce_loop:
+	;Load the current bit.
+	lod binShiftRightOnce_ptr, binShiftRightOnce_bin
+	add binShiftRightOnce_ptr, binShiftRightOnce_offset
+	lbr binShiftRightOnce_word, binShiftRightOnce_ptr
+	;Store it into the next bit.
+	inc binShiftRightOnce_ptr
+	sbr binShiftRightOnce_word, binShiftRightOnce_ptr
+	dec binShiftRightOnce_ptr
+	;Move to the previous bit.
+	dec binShiftRightOnce_offset
+	;Loop if we are not on the first bit.
+	jne binShiftRightOnce_loop, binShiftRightOnce_offset, binShiftRightOnce_end
+	;Store 0 into the first bit.
+	ldi binShiftRightOnce_word, '0'
+	sbr binShiftRightOnce_word, binShiftRightOnce_ptr
+	;Done.
+	ret
+
+;Converts a binary string into a word.
+;	Input:  bin2word_bin (pointer)
+;	Output: bin2word_word (immidiate)
+def bin2word_powers, 16384, 8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0
+def bin2word_pointer, 0
+def bin2word_word, 0
+def bin2word_tmp, 0
+def bin2word_bin, 0
+def bin2word_zero, 0
+def bin2word_one, "1"
+def bin2word_negate, -32768
+fct bin2word:
+	ldi bin2word_pointer, bin2word_powers
+	ldi bin2word_word, 0
+
+	;Check if the sign bit is 1.
+	lbr bin2word_tmp, bin2word_bin
+	jne bin2word_skip_negative, bin2word_tmp, bin2word_one
+
+	;Subtract the sign bit if it is 1.
+	sub bin2word_word, bin2word_negate
+lbl bin2word_skip_negative:
+	inc bin2word_bin
+	
+lbl bin2word_loop:
+
+	;Check if the current bit is 1.
+	lbr bin2word_tmp, bin2word_bin
+	jne bin2word_loop_skip, bin2word_tmp, bin2word_one
+	
+	;Accumulate the power if it is 1.
+	lbr bin2word_tmp, bin2word_pointer
+	add bin2word_word, bin2word_tmp
+lbl bin2word_loop_skip:
+	
+	;Increment our pointers.
+	inc bin2word_pointer
+	inc bin2word_bin
+
+	;Loop if not the end of the binary string.
+	lbr bin2word_tmp, bin2word_bin
+	jne bin2word_loop, bin2word_tmp, bin2word_zero
+
+	ret
+
+;Converts a word into a binary string.
+;	Input: word2bin_word (immidiate)
+;	Output: word2bin_bin (pointer)
+def word2bin_word, 0
+def word2bin_tmp, 0
+def word2bin_char_0, "0"
+def word2bin_char_1, "1"
+def word2bin_bin, "0000000000000000", 0
+def word2bin_powers, 16384, 8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0
+def word2bin_negate, -32768
+def word2bin_one, 1
+def word2bin_zero, 0
+def word2bin_pointer, 0
+def word2bin_pointer_out, 0
+def word2bin_power, 0
+fct word2bin:
+	;Set the first bit to 1 only if the input is negative.
+	lod word2bin_bin, word2bin_char_0
+	jge word2bin_positive, word2bin_word, word2bin_zero
+	;If the output is negative, remove the sign bit.
+	sub word2bin_word, word2bin_negate
+	lod word2bin_bin, word2bin_char_1
+lbl word2bin_positive:
+	ldi word2bin_pointer, word2bin_powers
+	ldi word2bin_pointer_out, word2bin_bin+1
+	;Loop through the next 7 bits and our powers.
+lbl word2bin_loop:
+	lbr word2bin_power, word2bin_pointer
+	;Subtract the power from our input.
+	lod word2bin_tmp, word2bin_word
+	sub word2bin_tmp, word2bin_power
+	sbr word2bin_char_0, word2bin_pointer_out
+	;If the result is not less than zero...
+	jpl word2bin_loop_skip, word2bin_tmp, word2bin_zero
+	;...then our bit is 1 and store the result back into the input. 
+	sbr word2bin_char_1, word2bin_pointer_out
+	lod word2bin_word, word2bin_tmp
+lbl word2bin_loop_skip:
+	inc word2bin_pointer
+	inc word2bin_pointer_out
+	jne word2bin_loop, word2bin_power, word2bin_one
+	ret
+
+;Prints a null-terminated string.
+;	Input: print_in (pointer)
+;	Output: text on the screen
+def print_in, 0
+def print_char, 0
+def print_zero, 0
+fct print:
+	lbr print_char, print_in
+	jpe print_end, print_char, print_zero
+	set print_char
+	inc print_in
+	jmp print
+lbl print_end:
+	ret
+
+;Prints newline to the screen.	
+def newline_char, 10
+fct newline:
+	set newline_char
+	ret

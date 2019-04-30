@@ -125,6 +125,7 @@ void RebecCompile(rebec_line_t *lines, int line_count) {
 		RebecAppendOutput(&data,";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n");
 	}
 
+
 	//Temporary registers for the compiler
 	RebecAppendOutput(&data, "___REBEC_TEMP_1___:\n\trssb 0\n");
 	RebecAppendOutput(&data, "___REBEC_TEMP_2___:\n\trssb 0\n");
@@ -140,6 +141,7 @@ void RebecCompile(rebec_line_t *lines, int line_count) {
 
 	//Handle the commands
 	for (int i = 0; i < line_count; i++) {
+		printf("%i / %i\n", i, line_count);
 		char *cmd = lines[i].command.name;
 		if (strcmp(cmd, "fct") == 0 || strcmp(cmd, "lbl") == 0) {
 			RebecFCT(lines[i], &code, verbose); 
@@ -488,10 +490,13 @@ rebec_line_t RebecParseLine(const char *line, int line_no) {
 }
 
 
-rebec_line_t* RebecLoadLines(const char *fname) {
+char RebecLoadLines(const char *fname) {
 	
 	//Read raw ASCII text
 	FILE *file = fopen(fname, "rb");
+	if (file == NULL) {
+		return 1;
+	}
 	fseek(file, 0, SEEK_END);
 	int file_size = ftell(file) + 1;
 	char buffer[file_size];
@@ -576,10 +581,19 @@ rebec_line_t* RebecLoadLines(const char *fname) {
 		FreeRebecLine(&rlines[i]);
 	}
 	free(rlines);
-
-	return NULL;
+	return 0;
 }
 
 int main(int argc, char** argv) {
-	rebec_line_t* lines = RebecLoadLines(argv[1]);
+	if (argc != 2) {
+		printf("Usage:\n\t");
+		printf("rebec input.rbc > output.asm\n");
+		return 1;
+	}
+	char err = RebecLoadLines(argv[1]);
+	if (err != 0) {
+		printf("Usage:\n\t");
+		printf("rebec input.rbc > output.asm\n");
+	}
+	return err;
 }
